@@ -139,9 +139,10 @@ const StepWrapper = ({ children, stepKey }) => {
 
 // ─── STEPS ────────────────────────────────────────────────────────
 
-function StepTipo({ data, setData }) {
+function StepTipo({ data, setData, errors = {} }) {
     return (
         <SectionCard title="¿Cómo describes tu proyecto?" subtitle="Elige la opción que mejor te represente. Esto adapta las preguntas a lo que realmente necesitas.">
+            {errors.clientType && <p style={{ fontSize: 13, color: "#FF3B30", marginBottom: 12, fontFamily: "'Inter', sans-serif" }}>{errors.clientType}</p>}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {CLIENT_TYPES.map(ct => {
                     const sel = data.clientType === ct.id;
@@ -197,16 +198,22 @@ function StepTipo({ data, setData }) {
     );
 }
 
-function StepNegocio({ data, setData }) {
+function StepNegocio({ data, setData, errors = {} }) {
     const f = k => v => setData({ ...data, [k]: v });
     return (
         <SectionCard title="Cuéntame sobre el negocio" subtitle="Información esencial para construir la web correcta.">
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <Field label="Nombre del negocio o marca"><TextInput value={data.businessName || ""} onChange={f("businessName")} placeholder="Ej: Laura Pérez Consulting" /></Field>
+                <Field label="Nombre del negocio o marca *">
+                    <TextInput value={data.businessName || ""} onChange={f("businessName")} placeholder="Ej: Laura Pérez Consulting" />
+                    {errors.businessName && <p style={{ fontSize: 12, color: "#FF3B30", marginTop: 4, fontFamily: "'Inter', sans-serif" }}>{errors.businessName}</p>}
+                </Field>
                 <Field label="Tagline o frase de posicionamiento" note="Opcional — la línea que define lo que haces"><TextInput value={data.tagline || ""} onChange={f("tagline")} placeholder="Ej: Impuestos sin complicaciones." /></Field>
             </div>
             <FieldGroup label="Contacto">
-                <Field label="Email de contacto"><TextInput value={data.email || ""} onChange={f("email")} placeholder="hola@tudominio.com" /></Field>
+                <Field label="Email de contacto *">
+                    <TextInput value={data.email || ""} onChange={f("email")} placeholder="hola@tudominio.com" />
+                    {errors.email && <p style={{ fontSize: 12, color: "#FF3B30", marginTop: 4, fontFamily: "'Inter', sans-serif" }}>{errors.email}</p>}
+                </Field>
                 <Field label="WhatsApp / teléfono"><TextInput value={data.whatsapp || ""} onChange={f("whatsapp")} placeholder="+1 (809) 000-0000" /></Field>
                 <Field label="Ciudad y país"><TextInput value={data.location || ""} onChange={f("location")} placeholder="Santo Domingo, República Dominicana" /></Field>
             </FieldGroup>
@@ -523,15 +530,69 @@ function Summary({ data }) {
     );
 }
 
+// ─── VALIDATION ──────────────────────────────────────────────────
+
+const REQUIRED_FIELDS = {
+    tipo: { clientType: "Selecciona un tipo de proyecto" },
+    negocio: { businessName: "El nombre es obligatorio", email: "El email es obligatorio" },
+};
+
+// ─── THANK YOU SCREEN ────────────────────────────────────────────
+
+function ThankYou({ clientName }) {
+    return (
+        <div style={{
+            minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+            background: "linear-gradient(180deg, #f2f2f7 0%, #e8e8ed 100%)",
+            fontFamily: "'Inter', -apple-system, sans-serif", padding: 24,
+        }}>
+            <div style={{
+                background: "#fff", borderRadius: 24, padding: "48px 32px",
+                textAlign: "center", maxWidth: 440, width: "100%",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+            }}>
+                <div style={{
+                    width: 56, height: 56, borderRadius: "50%", margin: "0 auto 20px",
+                    background: "linear-gradient(135deg, #34C759, #30D158)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                </div>
+                <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1d1d1f", letterSpacing: "-0.03em", marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>
+                    {clientName ? `Gracias, ${clientName}` : "Gracias"}
+                </h1>
+                <p style={{ fontSize: 15, color: "#8e8e93", lineHeight: 1.6, marginBottom: 0, fontFamily: "'Inter', sans-serif" }}>
+                    Recibimos toda tu información. Nos pondremos en contacto contigo pronto para comenzar a trabajar en tu web.
+                </p>
+            </div>
+        </div>
+    );
+}
+
 // ─── APP ──────────────────────────────────────────────────────────
 
+const STORAGE_KEY = "clients-form-draft";
+
 export default function App() {
-    const [data, setData] = useState({ clientType: "", impactLevel: 5 });
-    const [stepIndex, setStepIndex] = useState(0);
+    const [data, setData] = useState(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : { clientType: "", impactLevel: 5 };
+        } catch { return { clientType: "", impactLevel: 5 }; }
+    });
+    const [stepIndex, setStepIndex] = useState(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY + "-step");
+            return saved ? parseInt(saved, 10) : 0;
+        } catch { return 0; }
+    });
     const [showSummary, setShowSummary] = useState(false);
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
     const [sendError, setSendError] = useState("");
+    const [errors, setErrors] = useState({});
     const pillsRef = useRef(null);
 
     const clientType = data.clientType || "personal";
@@ -540,6 +601,31 @@ export default function App() {
     const StepComp = STEP_COMPS[currentStep];
     const progress = ((stepIndex + 1) / steps.length) * 100;
     const isLast = stepIndex === steps.length - 1;
+
+    // Persist data to localStorage
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }, [data]);
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY + "-step", String(stepIndex));
+    }, [stepIndex]);
+
+    // Read query params on mount
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const clientName = params.get("client");
+        const clientTypeParam = params.get("type");
+        if (clientName || clientTypeParam) {
+            setData(prev => ({
+                ...prev,
+                ...(clientName && { clientName }),
+                ...(clientTypeParam && STEPS_CONFIG[clientTypeParam] && { clientType: clientTypeParam }),
+            }));
+            if (clientTypeParam && STEPS_CONFIG[clientTypeParam]) {
+                setStepIndex(1);
+            }
+        }
+    }, []);
 
     // Auto-scroll pills to show active step
     useEffect(() => {
@@ -551,14 +637,39 @@ export default function App() {
         }
     }, [stepIndex, showSummary]);
 
+    const validate = () => {
+        const reqs = REQUIRED_FIELDS[currentStep];
+        if (!reqs) return true;
+        const newErrors = {};
+        for (const [field, msg] of Object.entries(reqs)) {
+            const val = data[field];
+            if (!val || (typeof val === "string" && !val.trim())) {
+                newErrors[field] = msg;
+            }
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const goNext = () => {
+        if (!validate()) return;
         if (isLast) { setShowSummary(true); return; }
         setStepIndex(i => i + 1);
+        setErrors({});
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
     const goBack = () => {
         if (showSummary) { setShowSummary(false); return; }
-        if (stepIndex > 0) { setStepIndex(i => i - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
+        if (stepIndex > 0) { setStepIndex(i => i - 1); setErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    };
+
+    const resetForm = () => {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY + "-step");
+        setData({ clientType: "", impactLevel: 5 });
+        setStepIndex(0);
+        setShowSummary(false);
+        setErrors({});
     };
 
     const sendBrief = async () => {
@@ -573,14 +684,17 @@ export default function App() {
             });
             if (!res.ok) throw new Error("Error al enviar");
             setSent(true);
-            localStorage.removeItem("clients-form-draft");
-            localStorage.removeItem("clients-form-draft-step");
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEY + "-step");
         } catch (err) {
             setSendError("No se pudo enviar. Intenta de nuevo.");
         } finally {
             setSending(false);
         }
     };
+
+    // Thank you screen after successful send
+    if (sent) return <ThankYou clientName={data.clientName || data.businessName} />;
 
     return (
         <div style={{
@@ -625,19 +739,28 @@ export default function App() {
                             <span style={{
                                 fontSize: 14, fontWeight: 700, color: "#1d1d1f",
                                 letterSpacing: "-0.01em", fontFamily: "'Inter', sans-serif",
-                            }}>Brief</span>
+                            }}>{data.clientName ? `Hola ${data.clientName}` : "Brief"}</span>
                         </div>
-                        <div style={{
-                            background: showSummary ? "linear-gradient(135deg, #34C759, #30D158)" : "#f2f2f7",
-                            borderRadius: 20, padding: "4px 12px",
-                        }}>
-                            <span style={{
-                                fontSize: 12, fontWeight: 600,
-                                color: showSummary ? "#fff" : "#8e8e93",
-                                fontFamily: "'Inter', sans-serif",
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {(stepIndex > 0 || data.businessName) && (
+                                <button onClick={resetForm} style={{
+                                    background: "none", border: "none", cursor: "pointer",
+                                    fontSize: 11, color: "#adadb8", fontFamily: "'Inter', sans-serif",
+                                    padding: "4px 8px",
+                                }}>Reiniciar</button>
+                            )}
+                            <div style={{
+                                background: showSummary ? "linear-gradient(135deg, #34C759, #30D158)" : "#f2f2f7",
+                                borderRadius: 20, padding: "4px 12px",
                             }}>
-                                {showSummary ? "✓ Completo" : `${stepIndex + 1} de ${steps.length}`}
-                            </span>
+                                <span style={{
+                                    fontSize: 12, fontWeight: 600,
+                                    color: showSummary ? "#fff" : "#8e8e93",
+                                    fontFamily: "'Inter', sans-serif",
+                                }}>
+                                    {showSummary ? "✓ Completo" : `${stepIndex + 1} de ${steps.length}`}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -702,7 +825,7 @@ export default function App() {
             {/* Content */}
             <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 140px" }}>
                 <StepWrapper stepKey={showSummary ? "summary" : currentStep}>
-                    {showSummary ? <Summary data={data} /> : StepComp && <StepComp data={data} setData={setData} />}
+                    {showSummary ? <Summary data={data} /> : StepComp && <StepComp data={data} setData={d => { setData(d); setErrors({}); }} errors={errors} />}
                 </StepWrapper>
             </div>
 
