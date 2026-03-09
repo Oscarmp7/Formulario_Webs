@@ -29,6 +29,26 @@ function generateEmailHTML(data) {
         { title: "Entrega", color: "#FF9500", rows: [["Lanzamiento", data.launchDate], ["Contenido deadline", data.contentDeadline], ["Aprobador", data.designApprover], ["Revisiones", data.revisionCycles], ["Redes", data.socialLinks], ["Notas finales", data.finalNotes]] },
     ];
 
+    const fileGroups = [
+        { label: "Logo", files: data.logoFiles || [] },
+        { label: "Brand assets", files: data.brandFiles || [] },
+        { label: "Portfolio", files: data.portfolioFiles || [] },
+        { label: "Fotos perfil", files: data.profileFiles || [] },
+    ];
+    const hasFiles = fileGroups.some(g => g.files.length > 0);
+
+    const filesHTML = hasFiles ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-radius:12px;overflow:hidden;border:1px solid #f0f0f5;">
+        <tr><td style="background:#1d1d1f;padding:12px 18px;">
+            <span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;font-family:'Helvetica Neue',Arial,sans-serif;">Archivos Adjuntos</span>
+        </td></tr>
+        ${fileGroups.filter(g => g.files.length > 0).map(g => g.files.map(f => `
+        <tr><td style="padding:10px 18px;border-bottom:1px solid #f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;">
+            <span style="font-size:12px;color:#8e8e93;font-weight:600;display:inline-block;width:120px;vertical-align:top;">${g.label}</span>
+            <a href="${f.url}" style="font-size:13px;color:#007AFF;text-decoration:none;" target="_blank">${f.name}</a>
+        </td></tr>`).join("")).join("")}
+    </table>` : "";
+
     const sectionHTML = sections.map(s => {
         const rows = s.rows.filter(([, v]) => v && String(v).trim());
         if (!rows.length) return "";
@@ -61,6 +81,7 @@ function generateEmailHTML(data) {
                     </td></tr>
                     <tr><td style="height:20px;"></td></tr>
                     <tr><td>${sectionHTML}</td></tr>
+                    ${hasFiles ? `<tr><td>${filesHTML}</td></tr>` : ""}
                     <tr><td style="padding:24px 0;text-align:center;">
                         <p style="font-size:12px;color:#8e8e93;margin:0;">Brief adjunto como archivo .md</p>
                     </td></tr>

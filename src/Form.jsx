@@ -116,6 +116,103 @@ const Chips = ({ options, selected, onChange, single }) => {
 
 const Sep = () => <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #e5e5ea, transparent)", margin: "4px 0" }} />;
 
+function FileUpload({ files = [], onChange, accept = "image/*,.pdf,.svg", label = "Arrastra archivos aquí", note, maxFiles = 5 }) {
+    const [dragOver, setDragOver] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState("");
+    const inputRef = useRef(null);
+
+    const uploadFile = async (file) => {
+        const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": file.type, "x-filename": encodeURIComponent(file.name) },
+            body: file,
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || "Upload failed");
+        }
+        return res.json();
+    };
+
+    const handleFiles = async (newFiles) => {
+        const fileList = Array.from(newFiles);
+        const remaining = maxFiles - files.length;
+        if (remaining <= 0) return;
+        const toUpload = fileList.slice(0, remaining);
+        setUploading(true);
+        setError("");
+        try {
+            const results = await Promise.all(
+                toUpload.map(async (file) => {
+                    if (file.size > 10 * 1024 * 1024) throw new Error(`${file.name} excede 10 MB`);
+                    const { url } = await uploadFile(file);
+                    return { name: file.name, url, type: file.type, size: file.size };
+                })
+            );
+            onChange([...files, ...results]);
+        } catch (err) {
+            setError(err.message || "Error al subir archivo");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const removeFile = (index) => onChange(files.filter((_, i) => i !== index));
+    const isImage = (type) => type && type.startsWith("image/");
+
+    return (
+        <div>
+            <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+                onClick={() => !uploading && inputRef.current?.click()}
+                style={{
+                    border: `2px dashed ${dragOver ? "#007AFF" : "#e8e8ed"}`,
+                    borderRadius: 14, padding: "24px 16px", textAlign: "center",
+                    cursor: uploading ? "wait" : "pointer",
+                    background: dragOver ? "rgba(0,122,255,0.04)" : "#f8f8fa",
+                    transition: "all 0.2s ease",
+                }}
+            >
+                <input ref={inputRef} type="file" accept={accept} multiple
+                    onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
+                    style={{ display: "none" }} />
+                <div style={{ fontSize: 28, marginBottom: 8 }}>{uploading ? "⏳" : "📎"}</div>
+                <p style={{
+                    fontSize: 13, color: uploading ? "#007AFF" : "#8e8e93",
+                    fontFamily: "'Inter', sans-serif", fontWeight: 500, margin: 0,
+                }}>{uploading ? "Subiendo..." : label}</p>
+                {note && <p style={{ fontSize: 11, color: "#adadb8", marginTop: 6, fontFamily: "'Inter', sans-serif" }}>{note}</p>}
+            </div>
+            {error && <p style={{ fontSize: 12, color: "#FF3B30", marginTop: 6, fontFamily: "'Inter', sans-serif" }}>{error}</p>}
+            {files.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10, marginTop: 12 }}>
+                    {files.map((f, i) => (
+                        <div key={i} style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1px solid #e8e8ed", background: "#f8f8fa" }}>
+                            {isImage(f.type) ? (
+                                <img src={f.url} alt={f.name} style={{ width: "100%", height: 80, objectFit: "cover", display: "block" }} />
+                            ) : (
+                                <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📄</div>
+                            )}
+                            <div style={{ padding: "6px 8px", fontSize: 10, color: "#8e8e93", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.name}</div>
+                            <button onClick={(e) => { e.stopPropagation(); removeFile(i); }} style={{
+                                position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%",
+                                background: "rgba(0,0,0,0.55)", border: "none", color: "#fff", fontSize: 12,
+                                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1,
+                            }}>×</button>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {files.length > 0 && (
+                <p style={{ fontSize: 11, color: "#adadb8", marginTop: 6, fontFamily: "'Inter', sans-serif" }}>{files.length} de {maxFiles} archivos</p>
+            )}
+        </div>
+    );
+}
+
 // ─── STEP WRAPPER WITH FADE ANIMATION ─────────────────────────────
 
 const StepWrapper = ({ children, stepKey }) => {
@@ -277,6 +374,16 @@ function StepIdentidad({ data, setData }) {
                 <Field label="Activos que ya tienes">
                     <Chips options={["Logo SVG", "Logo PNG", "Favicon", "Guía de marca", "Paleta de colores", "Tipografías", "Brand kit completo", "Fotos profesionales", "Sin activos todavía"]} selected={data.existingAssets || []} onChange={f("existingAssets")} />
                 </Field>
+                <Field label="Sube tu logo" note="SVG, PNG o JPG — máximo 10 MB">
+                    <FileUpload files={data.logoFiles || []} onChange={f("logoFiles")}
+                        accept="image/svg+xml,image/png,image/jpeg,image/webp"
+                        label="Arrastra tu logo aquí" note="SVG preferido para mejor calidad" maxFiles={3} />
+                </Field>
+                <Field label="Guía de marca u otros activos" note="PDF, imágenes de paleta, tipografías">
+                    <FileUpload files={data.brandFiles || []} onChange={f("brandFiles")}
+                        accept="image/*,.pdf,.svg,application/pdf,image/svg+xml"
+                        label="Arrastra archivos de marca" note="Brand guidelines, paleta de colores, etc." maxFiles={5} />
+                </Field>
                 <Field label="Colores principales" note="En HEX si los tienes — sino describe: 'azul marino + blanco roto'">
                     <TextInput value={data.colors || ""} onChange={f("colors")} placeholder="Ej: #0A0A0A, #F7F4EE, acento #C9A84C" />
                 </Field>
@@ -337,6 +444,11 @@ function StepPortfolio({ data, setData }) {
                 <Field label="Filtros del portfolio">
                     <Chips options={["Por industria", "Por servicio", "Por año", "Por resultado", "Por cliente"]} selected={data.portfolioFilters || []} onChange={f("portfolioFilters")} />
                 </Field>
+                <Field label="Imágenes de proyectos" note="Screenshots, fotos, capturas de casos de éxito">
+                    <FileUpload files={data.portfolioFiles || []} onChange={f("portfolioFiles")}
+                        accept="image/png,image/jpeg,image/webp"
+                        label="Arrastra imágenes de tus proyectos" note="PNG o JPG — máximo 5 archivos" maxFiles={5} />
+                </Field>
             </div>
         </SectionCard>
     );
@@ -372,6 +484,11 @@ function StepAbout({ data, setData }) {
                 </Field>
                 <Field label="Bio corta (2–3 líneas)"><TextInput value={data.shortBio || ""} onChange={f("shortBio")} multiline rows={2} placeholder="Resumen rápido de quién eres y qué haces." /></Field>
                 <Field label="Bio larga (1–2 párrafos)"><TextInput value={data.longBio || ""} onChange={f("longBio")} multiline placeholder="Historia, origen, misión, por qué haces lo que haces." /></Field>
+                <Field label="Foto de perfil o equipo" note="La imagen principal para la sección About">
+                    <FileUpload files={data.profileFiles || []} onChange={f("profileFiles")}
+                        accept="image/png,image/jpeg,image/webp"
+                        label="Arrastra tu foto profesional" note="Recomendado: alta calidad, bien iluminada" maxFiles={3} />
+                </Field>
             </div>
             <FieldGroup label="Números">
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
@@ -499,7 +616,7 @@ function Summary({ data }) {
 
             {/* Section cards */}
             {sections.map(s => {
-                const rows = s.rows.filter(([, v]) => v);
+                const rows = s.rows.filter(([, v]) => v && String(v).trim());
                 if (!rows.length) return null;
                 return (
                     <div key={s.title} style={{
@@ -526,6 +643,52 @@ function Summary({ data }) {
                     </div>
                 );
             })}
+
+            {/* Uploaded files preview */}
+            {(() => {
+                const allFiles = [
+                    ...(data.logoFiles || []).map(f => ({ ...f, category: "Logo" })),
+                    ...(data.brandFiles || []).map(f => ({ ...f, category: "Brand" })),
+                    ...(data.portfolioFiles || []).map(f => ({ ...f, category: "Portfolio" })),
+                    ...(data.profileFiles || []).map(f => ({ ...f, category: "Perfil" })),
+                ];
+                if (!allFiles.length) return null;
+                return (
+                    <div style={{
+                        background: "#fff", borderRadius: 16, padding: "20px 22px",
+                        border: "1px solid #f0f0f5", boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                            <span style={{ fontSize: 18 }}>📎</span>
+                            <p style={{
+                                fontSize: 12, fontWeight: 700, color: "#8e8e93",
+                                textTransform: "uppercase", letterSpacing: "0.08em",
+                                fontFamily: "'Inter', sans-serif",
+                            }}>Archivos subidos</p>
+                        </div>
+                        <div style={{
+                            display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8,
+                        }}>
+                            {allFiles.map((f, i) => (
+                                <div key={i} style={{
+                                    borderRadius: 8, overflow: "hidden",
+                                    border: "1px solid #e8e8ed", background: "#f8f8fa",
+                                }}>
+                                    {f.type?.startsWith("image/") ? (
+                                        <img src={f.url} alt={f.name} style={{ width: "100%", height: 64, objectFit: "cover", display: "block" }} />
+                                    ) : (
+                                        <div style={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📄</div>
+                                    )}
+                                    <div style={{ padding: "4px 6px", fontSize: 9, color: "#8e8e93", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        <span style={{ fontSize: 8, color: "#007AFF", fontWeight: 600, display: "block", marginBottom: 1 }}>{f.category}</span>
+                                        {f.name}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

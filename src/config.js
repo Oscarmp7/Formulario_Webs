@@ -33,10 +33,10 @@ export function getBriefSections(data) {
         { key: "PERFIL", title: "Perfil", icon: "👤", rows: [["Tipo", type?.label], ["Nombre", data.businessName], ["Tagline", data.tagline], ["Email", data.email], ["WhatsApp", data.whatsapp], ["Ubicación", data.location], ["Idioma", data.language], ["URL actual", data.currentUrl]] },
         { key: "OBJETIVOS", title: "Objetivos", icon: "🎯", rows: [["Metas", (data.goals || []).join(", ")], ["CTA principal", data.mainCta], ["Éxito", data.successMetric], ["Competidores", data.competitors]] },
         { key: "AUDIENCIA", title: "Audiencia", icon: "👥", rows: [["Tipos", (data.targetTypes || []).join(", ")], ["Cliente ideal", data.idealClient], ["Mercados", (data.markets || []).join(", ")], ["Emoción", data.feeling]] },
-        { key: "IDENTIDAD", title: "Identidad", icon: "🎨", rows: [["Assets", (data.existingAssets || []).join(", ")], ["Colores", data.colors], ["Tipografías", data.fonts], ["Refs. +", data.refLikes], ["Refs. –", data.refDislikes]] },
+        { key: "IDENTIDAD", title: "Identidad", icon: "🎨", rows: [["Assets", (data.existingAssets || []).join(", ")], ["Logo", (data.logoFiles || []).map(f => f.url).join(", ")], ["Brand assets", (data.brandFiles || []).map(f => f.url).join(", ")], ["Colores", data.colors], ["Tipografías", data.fonts], ["Refs. +", data.refLikes], ["Refs. –", data.refDislikes]] },
         { key: "SERVICIOS", title: "Servicios", icon: "⚡", rows: [["Lista", data.services], ["Presentación", data.servicePresentation], ["CTA", data.servicesCta], ["Credibilidad", (data.credSections || []).join(", ")]] },
-        { key: "CONTENIDO", title: "Contenido / Trabajos", icon: "🎬", rows: [["Plataforma", data.videoPlatform], ["Hero video", data.heroVideo], ["Destacados", data.featuredCount], ["Top proyectos", data.topProjects], ["Casos", data.cases]] },
-        { key: "HISTORIA", title: "Historia", icon: "📖", rows: [["Statement", data.statement], ["Bio corta", data.shortBio], ["Bio larga", data.longBio], ["Años exp.", data.yearsExp], ["Proyectos", data.projectCount], ["Países", data.countries], ["Premios", data.awards], ["Valores", data.values]] },
+        { key: "CONTENIDO", title: "Contenido / Trabajos", icon: "🎬", rows: [["Plataforma", data.videoPlatform], ["Hero video", data.heroVideo], ["Destacados", data.featuredCount], ["Top proyectos", data.topProjects], ["Casos", data.cases], ["Imágenes portfolio", (data.portfolioFiles || []).map(f => f.url).join(", ")]] },
+        { key: "HISTORIA", title: "Historia", icon: "📖", rows: [["Statement", data.statement], ["Bio corta", data.shortBio], ["Bio larga", data.longBio], ["Fotos", (data.profileFiles || []).map(f => f.url).join(", ")], ["Años exp.", data.yearsExp], ["Proyectos", data.projectCount], ["Países", data.countries], ["Premios", data.awards], ["Valores", data.values]] },
         { key: "DISEÑO", title: "Diseño UX/UI", icon: "✨", rows: [["Visual", data.visualLevel], ["Tema", data.theme], ["Animaciones", data.animationLevel], ["Secciones", (data.sections || []).join(", ")], ["No quiero", data.dontWant], ["Impacto", data.impactLevel]] },
         { key: "TÉCNICO", title: "Técnico", icon: "⚙️", rows: [["Dominio", data.domain], ["Hosting", data.hosting], ["Integraciones", (data.integrations || []).join(", ")], ["Requerimientos", (data.technicalReqs || []).join(", ")], ["Notas", data.technicalNotes]] },
         { key: "ENTREGA", title: "Entrega", icon: "📦", rows: [["Lanzamiento", data.launchDate], ["Contenido", data.contentDeadline], ["Aprobador", data.designApprover], ["Revisiones", data.revisionCycles], ["Redes", data.socialLinks], ["Notas finales", data.finalNotes]] },
@@ -51,7 +51,19 @@ export function generateMarkdown(data) {
         const rows = s.rows.filter(([, v]) => v && String(v).trim());
         if (!rows.length) return;
         md += `## ${s.key}\n`;
-        rows.forEach(([k, v]) => { md += `- **${k}**: ${v}\n`; });
+        rows.forEach(([k, v]) => {
+            const str = String(v);
+            if (str.includes('.public.blob.vercel-storage.com')) {
+                const urls = str.split(', ').filter(Boolean);
+                md += `- **${k}**:\n`;
+                urls.forEach(url => {
+                    const name = decodeURIComponent(url.split('/').pop().replace(/^\d+-/, ''));
+                    md += `  - [${name}](${url})\n`;
+                });
+            } else {
+                md += `- **${k}**: ${v}\n`;
+            }
+        });
         md += "\n";
     });
     return md;
