@@ -95,11 +95,11 @@ const Chips = ({ options, selected, onChange, single }) => {
             {options.map(o => {
                 const sel = isSelected(o);
                 return (
-                    <button key={o} onClick={() => toggle(o)} style={{
+                    <button key={o} onClick={() => toggle(o)} aria-pressed={sel} style={{
                         background: sel ? "linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 100%)" : "#f2f2f7",
                         color: sel ? "#fff" : "#3a3a3c",
                         border: sel ? "1.5px solid transparent" : "1.5px solid #e5e5ea",
-                        borderRadius: 24, padding: "8px 16px",
+                        borderRadius: 24, padding: "10px 18px", minHeight: 44,
                         fontSize: 13, fontWeight: sel ? 600 : 450, cursor: "pointer",
                         fontFamily: "'Inter', sans-serif",
                         transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
@@ -702,21 +702,6 @@ export default function App() {
             background: "linear-gradient(180deg, #f2f2f7 0%, #e8e8ed 100%)",
             fontFamily: "'Inter', -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
         }}>
-            {/* Google Fonts */}
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet" />
-
-            <style>{`
-                *{box-sizing:border-box;margin:0;padding:0;}
-                body{background:#f2f2f7;-webkit-font-smoothing:antialiased;}
-                ::-webkit-scrollbar{display:none;}
-                textarea,input{-webkit-font-smoothing:antialiased;}
-                input[type=range]{-webkit-appearance:none;height:4px;background:#e5e5ea;border-radius:2px;outline:none;width:100%;}
-                input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#007AFF;cursor:pointer;box-shadow:0 2px 8px rgba(0,122,255,0.3);}
-                ::placeholder{color:#adadb8;}
-                textarea:focus,input:focus{outline:none;}
-                @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-            `}</style>
-
             {/* Header */}
             <div style={{
                 position: "sticky", top: 0, zIndex: 20,
@@ -765,7 +750,7 @@ export default function App() {
                     </div>
 
                     {/* Progress track */}
-                    <div style={{
+                    <div role="progressbar" aria-valuenow={showSummary ? 100 : Math.round(progress)} aria-valuemin={0} aria-valuemax={100} style={{
                         height: 4, background: "#e5e5ea", borderRadius: 2,
                         overflow: "hidden", marginBottom: 14,
                     }}>

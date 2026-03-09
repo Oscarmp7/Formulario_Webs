@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Brief — Formulario de Cliente</title>
     <meta name="description" content="Formulario inteligente para recopilar briefs de diseño web de clientes." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{background:#f2f2f7;-webkit-font-smoothing:antialiased;font-family:'Inter',-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
+      ::-webkit-scrollbar{display:none;}
+      textarea,input{-webkit-font-smoothing:antialiased;}
+      input[type=range]{-webkit-appearance:none;height:4px;background:#e5e5ea;border-radius:2px;outline:none;width:100%;}
+      input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#007AFF;cursor:pointer;box-shadow:0 2px 8px rgba(0,122,255,0.3);}
+      ::placeholder{color:#adadb8;}
+      textarea:focus,input:focus{outline:none;}
+      button:focus-visible{outline:2px solid #007AFF;outline-offset:2px;}
+      input:focus-visible,textarea:focus-visible{border-color:#007AFF !important;box-shadow:0 0 0 4px rgba(0,122,255,0.12) !important;}
+      @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+      @media(prefers-reduced-motion:reduce){
+        *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
