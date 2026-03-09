@@ -1,32 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-
-const CLIENT_TYPES = [
-    { id: "personal", label: "Profesional independiente", desc: "Consultor, coach, médico, abogado, diseñador, fotógrafo, terapeuta, trainer…", icon: "👤" },
-    { id: "creative", label: "Creativo / Artista", desc: "Filmmaker, músico, artista visual, fotógrafo, creador de contenido, DJ…", icon: "🎨" },
-    { id: "business", label: "Empresa o negocio", desc: "Restaurante, tienda, startup, clínica, inmobiliaria, firma contable, constructora…", icon: "🏢" },
-    { id: "agency", label: "Agencia o estudio", desc: "Marketing, branding, diseño, publicidad, tecnología, producción…", icon: "🚀" },
-    { id: "other", label: "Otro", desc: "ONG, proyecto personal, portafolio académico, evento, comunidad…", icon: "✨" },
-];
-
-const STEPS_CONFIG = {
-    personal: ["tipo", "negocio", "objetivos", "audiencia", "identidad", "servicios", "about", "ux", "tecnico", "entrega"],
-    creative: ["tipo", "negocio", "objetivos", "audiencia", "identidad", "contenido", "portfolio", "about", "ux", "tecnico", "entrega"],
-    business: ["tipo", "negocio", "objetivos", "audiencia", "identidad", "servicios", "portfolio", "about", "ux", "tecnico", "entrega"],
-    agency: ["tipo", "negocio", "objetivos", "audiencia", "identidad", "servicios", "portfolio", "about", "ux", "tecnico", "entrega"],
-    other: ["tipo", "negocio", "objetivos", "audiencia", "identidad", "about", "ux", "tecnico", "entrega"],
-};
-
-const STEP_LABELS = {
-    tipo: "Perfil", negocio: "Negocio", objetivos: "Objetivos", audiencia: "Audiencia",
-    identidad: "Marca", contenido: "Contenido", portfolio: "Trabajos", servicios: "Servicios",
-    about: "Historia", ux: "Diseño", tecnico: "Técnico", entrega: "Entrega",
-};
-
-const STEP_ICONS = {
-    tipo: "👤", negocio: "💼", objetivos: "🎯", audiencia: "👥",
-    identidad: "🎨", contenido: "🎬", portfolio: "📁", servicios: "⚡",
-    about: "📖", ux: "✨", tecnico: "⚙️", entrega: "📦",
-};
+import { CLIENT_TYPES, STEPS_CONFIG, STEP_LABELS, STEP_ICONS, getBriefSections, generateMarkdown } from "./config.js";
 
 // ─── PRIMITIVES ───────────────────────────────────────────────────
 
@@ -503,18 +476,7 @@ const STEP_COMPS = {
 
 function Summary({ data }) {
     const type = CLIENT_TYPES.find(c => c.id === data.clientType);
-    const sections = [
-        { t: "Perfil", icon: "👤", rows: [["Tipo", type?.label], ["Nombre", data.businessName], ["Tagline", data.tagline], ["Email", data.email], ["WhatsApp", data.whatsapp], ["Ubicación", data.location], ["Idioma", data.language], ["URL actual", data.currentUrl]] },
-        { t: "Objetivos", icon: "🎯", rows: [["Metas", (data.goals || []).join(", ")], ["CTA principal", data.mainCta], ["Éxito", data.successMetric], ["Competidores", data.competitors]] },
-        { t: "Audiencia", icon: "👥", rows: [["Tipos", (data.targetTypes || []).join(", ")], ["Cliente ideal", data.idealClient], ["Mercados", (data.markets || []).join(", ")], ["Emoción", data.feeling]] },
-        { t: "Identidad", icon: "🎨", rows: [["Assets", (data.existingAssets || []).join(", ")], ["Colores", data.colors], ["Tipografías", data.fonts], ["Refs. +", data.refLikes], ["Refs. –", data.refDislikes]] },
-        { t: "Servicios", icon: "⚡", rows: [["Lista", data.services], ["Presentación", data.servicePresentation], ["CTA", data.servicesCta], ["Credibilidad", (data.credSections || []).join(", ")]] },
-        { t: "Contenido / Trabajos", icon: "🎬", rows: [["Plataforma", data.videoPlatform], ["Hero video", data.heroVideo], ["Destacados", data.featuredCount], ["Top proyectos", data.topProjects], ["Casos", data.cases]] },
-        { t: "Historia", icon: "📖", rows: [["Statement", data.statement], ["Bio corta", data.shortBio], ["Bio larga", data.longBio], ["Años exp.", data.yearsExp], ["Proyectos", data.projectCount], ["Países", data.countries], ["Premios", data.awards], ["Valores", data.values]] },
-        { t: "Diseño UX/UI", icon: "✨", rows: [["Visual", data.visualLevel], ["Tema", data.theme], ["Animaciones", data.animationLevel], ["Secciones", (data.sections || []).join(", ")], ["No quiero", data.dontWant], ["Impacto", data.impactLevel]] },
-        { t: "Técnico", icon: "⚙️", rows: [["Dominio", data.domain], ["Hosting", data.hosting], ["Integraciones", (data.integrations || []).join(", ")], ["Requerimientos", (data.technicalReqs || []).join(", ")], ["Notas", data.technicalNotes]] },
-        { t: "Entrega", icon: "📦", rows: [["Lanzamiento", data.launchDate], ["Contenido", data.contentDeadline], ["Aprobador", data.designApprover], ["Revisiones", data.revisionCycles], ["Redes", data.socialLinks], ["Notas finales", data.finalNotes]] },
-    ];
+    const sections = getBriefSections(data);
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Hero card */}
@@ -533,7 +495,7 @@ function Summary({ data }) {
                 const rows = s.rows.filter(([, v]) => v);
                 if (!rows.length) return null;
                 return (
-                    <div key={s.t} style={{
+                    <div key={s.title} style={{
                         background: "#fff", borderRadius: 16, padding: "20px 22px",
                         border: "1px solid #f0f0f5",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
@@ -544,7 +506,7 @@ function Summary({ data }) {
                                 fontSize: 12, fontWeight: 700, color: "#8e8e93",
                                 textTransform: "uppercase", letterSpacing: "0.08em",
                                 fontFamily: "'Inter', sans-serif",
-                            }}>{s.t}</p>
+                            }}>{s.title}</p>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                             {rows.map(([k, v]) => (
@@ -567,7 +529,9 @@ export default function App() {
     const [data, setData] = useState({ clientType: "", impactLevel: 5 });
     const [stepIndex, setStepIndex] = useState(0);
     const [showSummary, setShowSummary] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [sent, setSent] = useState(false);
+    const [sendError, setSendError] = useState("");
     const pillsRef = useRef(null);
 
     const clientType = data.clientType || "personal";
@@ -597,29 +561,25 @@ export default function App() {
         if (stepIndex > 0) { setStepIndex(i => i - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
     };
 
-    const exportBrief = () => {
-        const type = CLIENT_TYPES.find(c => c.id === data.clientType);
-        let md = `# Brief — ${data.businessName || "Sin nombre"}\n**Tipo**: ${type?.label || "—"}  |  **Fecha**: ${new Date().toLocaleDateString("es-DO")}\n\n`;
-        const secs = [
-            ["NEGOCIO", [["Nombre", data.businessName], ["Tagline", data.tagline], ["Email", data.email], ["WhatsApp", data.whatsapp], ["Ubicación", data.location], ["Idioma", data.language], ["URL actual", data.currentUrl]]],
-            ["OBJETIVOS", [["Metas", (data.goals || []).join(", ")], ["CTA principal", data.mainCta], ["Éxito", data.successMetric], ["Competidores", data.competitors]]],
-            ["AUDIENCIA", [["Tipos", (data.targetTypes || []).join(", ")], ["Cliente ideal", data.idealClient], ["Mercados", (data.markets || []).join(", ")], ["Emoción", data.feeling]]],
-            ["IDENTIDAD VISUAL", [["Assets", (data.existingAssets || []).join(", ")], ["Colores", data.colors], ["Tipografías", data.fonts], ["Refs. positivas", data.refLikes], ["Refs. negativas", data.refDislikes]]],
-            ["SERVICIOS", [["Lista", data.services], ["Presentación", data.servicePresentation], ["CTA", data.servicesCta], ["Credibilidad", (data.credSections || []).join(", ")]]],
-            ["CONTENIDO / TRABAJOS", [["Plataforma video", data.videoPlatform], ["Hero video", data.heroVideo], ["Destacados", data.featuredCount], ["Top proyectos", data.topProjects], ["Casos", data.cases]]],
-            ["HISTORIA", [["Statement", data.statement], ["Bio corta", data.shortBio], ["Bio larga", data.longBio], ["Años exp.", data.yearsExp], ["Proyectos", data.projectCount], ["Países", data.countries], ["Premios", data.awards], ["Valores", data.values]]],
-            ["DISEÑO UX/UI", [["Visual", data.visualLevel], ["Tema", data.theme], ["Animaciones", data.animationLevel], ["Secciones", (data.sections || []).join(", ")], ["No quiero", data.dontWant], ["Nivel impacto", data.impactLevel]]],
-            ["TÉCNICO", [["Dominio", data.domain], ["Hosting", data.hosting], ["Integraciones", (data.integrations || []).join(", ")], ["Requerimientos", (data.technicalReqs || []).join(", ")], ["Notas", data.technicalNotes]]],
-            ["ENTREGA", [["Lanzamiento", data.launchDate], ["Contenido", data.contentDeadline], ["Aprobador", data.designApprover], ["Revisiones", data.revisionCycles], ["Redes", data.socialLinks], ["Notas finales", data.finalNotes]]],
-        ];
-        secs.forEach(([title, pairs]) => {
-            const rows = pairs.filter(([, v]) => v);
-            if (!rows.length) return;
-            md += `## ${title}\n`;
-            rows.forEach(([k, v]) => { md += `- **${k}**: ${v}\n`; });
-            md += "\n";
-        });
-        navigator.clipboard.writeText(md).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
+    const sendBrief = async () => {
+        setSending(true);
+        setSendError("");
+        try {
+            const markdown = generateMarkdown(data);
+            const res = await fetch("/api/send-brief", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data, markdown }),
+            });
+            if (!res.ok) throw new Error("Error al enviar");
+            setSent(true);
+            localStorage.removeItem("clients-form-draft");
+            localStorage.removeItem("clients-form-draft-step");
+        } catch (err) {
+            setSendError("No se pudo enviar. Intenta de nuevo.");
+        } finally {
+            setSending(false);
+        }
     };
 
     return (
@@ -769,23 +729,26 @@ export default function App() {
                         </button>
                     )}
                     {showSummary ? (
-                        <button onClick={exportBrief}
-                            style={{
-                                flex: 1,
-                                background: copied
-                                    ? "linear-gradient(135deg, #34C759, #30D158)"
-                                    : "linear-gradient(135deg, #1d1d1f, #2c2c2e)",
-                                border: "none", color: "#fff", fontSize: 15, fontWeight: 600,
-                                padding: "14px 24px", borderRadius: 14, cursor: "pointer",
-                                fontFamily: "'Inter', sans-serif",
-                                transition: "all 0.3s ease",
-                                boxShadow: copied
-                                    ? "0 4px 16px rgba(52,199,89,0.3)"
-                                    : "0 4px 16px rgba(0,0,0,0.12)",
-                            }}
-                        >
-                            {copied ? "✓  Copiado al portapapeles" : "Copiar brief para Claude Code"}
-                        </button>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                            {sendError && <p style={{ fontSize: 13, color: "#FF3B30", textAlign: "center", fontFamily: "'Inter', sans-serif" }}>{sendError}</p>}
+                            <button onClick={sendBrief} disabled={sending}
+                                style={{
+                                    width: "100%",
+                                    background: sending
+                                        ? "linear-gradient(135deg, #8e8e93, #aeaeb2)"
+                                        : "linear-gradient(135deg, #1d1d1f, #2c2c2e)",
+                                    border: "none", color: "#fff", fontSize: 15, fontWeight: 600,
+                                    padding: "14px 24px", borderRadius: 14,
+                                    cursor: sending ? "not-allowed" : "pointer",
+                                    fontFamily: "'Inter', sans-serif",
+                                    transition: "all 0.3s ease",
+                                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                                    opacity: sending ? 0.7 : 1,
+                                }}
+                            >
+                                {sending ? "Enviando..." : "Enviar brief →"}
+                            </button>
+                        </div>
                     ) : (
                         <button onClick={goNext}
                             style={{
