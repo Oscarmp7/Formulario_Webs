@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web Project Brief</title>
-    <meta name="description" content="Tell us about your vision — goals, audience, brand identity, and design direction. Everything we need to build your perfect website." />
+    <title>Brief — Oscar Matos</title>
+    <meta name="description" content="Contame de tu proyecto: visión, audiencia, identidad y dirección visual. Todo lo que necesito para que tu web sea memorable." />
 
-    <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Web Project Brief" />
-    <meta property="og:description" content="Tell us about your vision. We'll build it." />
+    <meta property="og:title" content="Brief — Oscar Matos" />
+    <meta property="og:description" content="Contame de tu proyecto. Yo lo construyo." />
     <meta property="og:image" content="https://formulario-webs.vercel.app/api/og" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -18,30 +18,193 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Web Project Brief" />
-    <meta name="twitter:description" content="Tell us about your vision. We'll build it." />
+    <meta name="twitter:title" content="Brief — Oscar Matos" />
+    <meta name="twitter:description" content="Contame de tu proyecto. Yo lo construyo." />
     <meta name="twitter:image" content="https://formulario-webs.vercel.app/api/og" />
 
-    <!-- Theme -->
-    <meta name="theme-color" content="#1d1d1f" />
+    <!-- Theme aligned with background -->
+    <meta name="theme-color" content="#f2f2f7" />
+
+    <!-- Fonts: Cabinet Grotesk (display) + Satoshi (body) from Fontshare + JetBrains Mono from Google -->
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
     <style>
-      *{box-sizing:border-box;margin:0;padding:0;}
-      body{background:#f2f2f7;-webkit-font-smoothing:antialiased;font-family:'Inter',-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
-      ::-webkit-scrollbar{display:none;}
-      textarea,input{-webkit-font-smoothing:antialiased;}
-      input[type=range]{-webkit-appearance:none;height:4px;background:#e5e5ea;border-radius:2px;outline:none;width:100%;}
-      input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#007AFF;cursor:pointer;box-shadow:0 2px 8px rgba(0,122,255,0.3);}
-      ::placeholder{color:#adadb8;}
-      textarea:focus,input:focus{outline:none;}
-      button:focus-visible{outline:2px solid #007AFF;outline-offset:2px;}
-      input:focus-visible,textarea:focus-visible{border-color:#007AFF !important;box-shadow:0 0 0 4px rgba(0,122,255,0.12) !important;}
-      @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-      @media(prefers-reduced-motion:reduce){
-        *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+      /* Design tokens (mirror DESIGN.md). Source of truth: DESIGN.md frontmatter. */
+      :root {
+        /* Color */
+        --paper: #f2f2f7;
+        --paper-tint: #e8e8ed;
+        --paper-card: #ffffff;
+        --ink: #1d1d1f;
+        --ink-soft: #6e6e73;
+        --ink-faint: #8e8e93;
+        --rule: #d1d1d6;
+        --signal: #007AFF;
+        --signal-deep: #0055CC;
+        --signal-purple: #5856D6;
+        --signal-gradient: linear-gradient(135deg, #007AFF, #5856D6);
+        --success: #34C759;
+        --danger: #FF3B30;
+
+        /* Typography */
+        --font-display: "Cabinet Grotesk", system-ui, -apple-system, sans-serif;
+        --font-body: "Satoshi", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+        /* Spacing scale (4/8/12/20/32/56/96) */
+        --space-micro: 4px;
+        --space-xs: 8px;
+        --space-sm: 12px;
+        --space-md: 20px;
+        --space-lg: 32px;
+        --space-xl: 56px;
+        --space-xxl: 96px;
+
+        /* Motion */
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        --duration-fast: 200ms;
+        --duration-normal: 400ms;
+        --duration-slow: 650ms;
       }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 1.5;
+        letter-spacing: -0.005em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      ::-webkit-scrollbar { width: 0; height: 0; display: none; }
+      ::-webkit-scrollbar-track { background: transparent; }
+
+      /* Selection in Signal blue */
+      ::selection {
+        background: var(--signal);
+        color: #ffffff;
+      }
+
+      /* Placeholders */
+      ::placeholder {
+        color: var(--ink-faint);
+        opacity: 1;
+      }
+
+      /* Inputs: stripped of native chrome (Field.jsx overrides bg/border) */
+      input, textarea, select, button {
+        font-family: inherit;
+        font-size: inherit;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        outline: none;
+      }
+
+      textarea {
+        resize: vertical;
+        font-family: var(--font-body);
+      }
+
+      /* Range slider — square thumb, no glow, signal color */
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 1px;
+        background: var(--ink-soft);
+        width: 100%;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 0;
+        background: var(--signal);
+        cursor: pointer;
+        border: 0;
+        transition: background var(--duration-fast) var(--ease-out);
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        background: var(--signal-deep);
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 0;
+        background: var(--signal);
+        cursor: pointer;
+        border: 0;
+      }
+
+      /* Focus rings — accessible only, not decorative */
+      :focus-visible {
+        outline: 2px solid var(--signal);
+        outline-offset: 2px;
+      }
+
+      /* Button reset (per-component styles take over) */
+      button {
+        cursor: pointer;
+        font-family: inherit;
+        touch-action: manipulation;
+      }
+
+      input, textarea {
+        touch-action: manipulation;
+      }
+      button:disabled {
+        cursor: not-allowed;
+      }
+
+      /* Links — minimal default */
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* Reduced motion: kill all decorative anims, keep functional state changes */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* Hairline utility */
+      .hairline { border-top: 1px solid var(--rule); }
+      .hairline-bottom { border-bottom: 1px solid var(--rule); }
+
+      /* Typography utilities (used sparingly; component-level styles preferred) */
+      .display, .display-xl, .headline {
+        font-family: var(--font-display);
+      }
+      .mono { font-family: var(--font-mono); }
     </style>
   </head>
   <body>
